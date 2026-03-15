@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-with-default
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: svc-frontend
+      port:
+        number: 3000 
+  rules:
+    - host: myapp.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: svc-api
+                port:
+                  number: 8080
+
+          - path: /admin
+            pathType: Exact
+            backend:
+              service:
+                name: admin-svc
+                port:
+                  number: 9090
