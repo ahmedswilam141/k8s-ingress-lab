@@ -86,6 +86,74 @@ kubectl apply -f k8s/ingress/01-path-based-ingress.yaml
 # Add to /etc/hosts
 echo "$(minikube ip) myapp.com" | sudo tee -a /etc/hosts
 
+## ✍️ Lab Questions & Answers
+
+---
+
+### Task 1 — Setup & First Ingress
+
+**Q: What is the name of the IngressClass?**
+> `nginx`
+
+**Q: Why are the backend Services ClusterIP and not NodePort?**
+> Because the Ingress Controller handles all external traffic, so the backend services only need to be reachable internally. ClusterIP is enough for that.
+
+---
+
+### Task 2 — Path-based Routing
+
+**Q: Why does one Ingress replace 2 NodePort Services?**
+> Instead of exposing a separate port for each service, one Ingress handles all traffic on port 80 and routes it to the right service based on the URL path.
+
+---
+
+### Task 3 — Add /admin Path
+
+**Q: What response did /random return?**
+> A 404 Not Found — because no rule matches that path.
+
+**Q: How many rules does the routing table show in kubectl describe?**
+> 3 rules — one for `/`, one for `/api`, and one for `/admin`.
+
+---
+
+### Task 4 — Host-based Routing
+
+**Q: How many Host entries appear in the describe output?**
+> 3 — one for each subdomain.
+
+**Q: What happened with the unknown host (other.myapp.local)?**
+> Got a 404 — no rule matched that host so the controller had nowhere to send the request.
+
+**Q: What is the difference between path-based and host-based routing?**
+> Path-based routing uses the URL path to decide where to send traffic (e.g. `/api`). Host-based routing uses the subdomain (e.g. `api.myapp.local`). Path-based is for one app with multiple sections, host-based is for completely separate apps.
+
+---
+
+### Task 5 — PathType: Exact vs Prefix
+
+**Q: Did /api/users work?**
+> Yes — because the rule uses Prefix, which matches `/api` and anything after it.
+
+**Q: Did /admin/settings work? Why?**
+> No — because the rule uses Exact, which only matches `/admin` with nothing after it.
+
+**Q: When would you use pathType: Exact?**
+> When you want only that specific path to match and nothing under it — for example `/admin` or `/login`.
+
+---
+
+### Task 6 — Default Backend
+
+**Q: Which service responded to /anything?**
+> webapp-svc — it's the defaultBackend, so it catches any request that doesn't match a rule.
+
+**Q: Which service responded to http://myapp.local (no path)?**
+> webapp-svc — same reason, no rule matched so it fell back to the defaultBackend.
+
+**Q: What is the real-world use case for defaultBackend?**
+> To show a custom 404 page or redirect users when they hit a path that doesn't exist, instead of showing a raw nginx error.
+
 # Test
 curl --resolve "myapp.com:80:$(minikube ip)" http://myapp.com
 curl --resolve "myapp.com:80:$(minikube ip)" http://myapp.com/api
